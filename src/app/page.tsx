@@ -53,7 +53,6 @@ async function getGitHubStats(username: string) {
   // Calculate repository stats
   const totalStars = reposData.reduce((acc: number, repo) => acc + repo.stargazers_count, 0);
   const totalForks = reposData.reduce((acc: number, repo) => acc + repo.forks_count, 0);
-  const totalSize = reposData.reduce((acc: number, repo) => acc + repo.size, 0);
 
   // Calculate most active day
   const pushDays = reposData.map(repo => new Date(repo.pushed_at).getDay());
@@ -76,6 +75,24 @@ async function getGitHubStats(username: string) {
 
   const serverName = FAMOUS_DEVS[Math.floor(Math.random() * FAMOUS_DEVS.length)];
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const dateFilter = thirtyDaysAgo.toISOString().split('T')[0];
+
+  const commitsResponse = await fetch(
+    `https://api.github.com/search/commits?q=author:${username}+committer-date:>=${dateFilter}`, 
+    { 
+      headers: {
+        ...headers,
+        'Accept': 'application/vnd.github.cloak-preview+json'
+      },
+      next: { revalidate: 3600 }
+    }
+  );
+
+  const commitsData = await commitsResponse.json();
+  const totalCommits = commitsData.total_count;
+
   return { 
     userData,
     stats: {
@@ -83,7 +100,7 @@ async function getGitHubStats(username: string) {
       totalStars,
       totalForks,
       mostActiveDay,
-      totalSizeMB: Math.round(totalSize / 1024),
+      totalCommits,
       serverName
     }
   };
@@ -247,8 +264,8 @@ export default function Home() {
                     <span>{data.stats.mostActiveDay}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>TOTAL SIZE:</span>
-                    <span>{data.stats.totalSizeMB}MB</span>
+                    <span>COMMITS (30d):</span>
+                    <span>{data.stats.totalCommits}</span>
                   </div>
                   <div className="flex justify-between font-bold mt-2">
                     <span>CONTRIBUTION SCORE:</span>
