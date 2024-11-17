@@ -180,6 +180,8 @@ export default function Home() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Enter GitHub username"
+            autoCapitalize="none"
+            autoComplete="off"
             className="flex-1 px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 
                      border border-zinc-200 dark:border-zinc-700 
                      text-zinc-900 dark:text-white
