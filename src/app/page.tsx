@@ -25,9 +25,24 @@ interface GitHubUser {
 }
 
 async function getGitHubStats(username: string) {
+  const headers: HeadersInit = process.env.GITHUB_ACCESS_TOKEN 
+    ? {
+        'Authorization': `Bearer ${process.env.GITHUB_ACCESS_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    : {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+
   const [userResponse, reposResponse] = await Promise.all([
-    fetch(`https://api.github.com/users/${username}`),
-    fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=pushed`)
+    fetch(`https://api.github.com/users/${username}`, { 
+      headers,
+      next: { revalidate: 3600 } // Cache for 1 hour
+    }),
+    fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=pushed`, { 
+      headers,
+      next: { revalidate: 3600 }
+    })
   ]);
 
   if (!userResponse.ok) throw new Error('User not found');
@@ -48,6 +63,19 @@ async function getGitHubStats(username: string) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const mostActiveDay = days[dayCount.indexOf(Math.max(...dayCount))];
 
+  // Add served by name
+  const FAMOUS_DEVS = [
+    "Linus Torvalds",
+    "Ada Lovelace",
+    "Grace Hopper",
+    "Alan Turing",
+    "Margaret Hamilton",
+    "Dennis Ritchie",
+    "Ken Thompson"
+  ];
+
+  const serverName = FAMOUS_DEVS[Math.floor(Math.random() * FAMOUS_DEVS.length)];
+
   return { 
     userData,
     stats: {
@@ -55,7 +83,8 @@ async function getGitHubStats(username: string) {
       totalStars,
       totalForks,
       mostActiveDay,
-      totalSizeMB: Math.round(totalSize / 1024)
+      totalSizeMB: Math.round(totalSize / 1024),
+      serverName
     }
   };
 }
@@ -163,7 +192,7 @@ export default function Home() {
           <div className="receipt-container">
             <div className="coffee-stain" />
             <div ref={receiptRef} className="receipt-content w-full max-w-[88mm] bg-white text-black">
-              <div className="relative p-4 sm:p-6 font-mono text-[11px] sm:text-xs leading-relaxed">
+              <div className="p-4 sm:p-6 font-mono text-[11px] sm:text-xs leading-relaxed">
                 <div className="text-center mb-6">
                   <h2 className="text-base sm:text-lg font-bold">GITHUB RECEIPT</h2>
                   <p>{new Date().toLocaleDateString('en-US', {
@@ -178,9 +207,6 @@ export default function Home() {
                 <div className="mb-4">
                   <p>CUSTOMER: {data.userData.name || data.userData.login}</p>
                   <p className="opacity-75">@{data.userData.login}</p>
-                  {data.userData.location && (
-                    <p className="opacity-75">LOC: {data.userData.location}</p>
-                  )}
                 </div>
 
                 <div className="border-t border-b border-dashed py-3 mb-4">
@@ -211,45 +237,36 @@ export default function Home() {
                 </div>
 
                 <div className="mb-4">
-                  <p className="opacity-75">TOP LANGUAGES:</p>
+                  <p>TOP LANGUAGES:</p>
                   <p>{data.stats.topLanguages || 'NONE'}</p>
                 </div>
 
                 <div className="border-t border-dashed pt-3 mb-4">
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between">
                     <span>MOST ACTIVE DAY:</span>
                     <span>{data.stats.mostActiveDay}</span>
                   </div>
-                  <div className="flex justify-between text-xs mt-1">
+                  <div className="flex justify-between">
                     <span>TOTAL SIZE:</span>
                     <span>{data.stats.totalSizeMB}MB</span>
                   </div>
-                  <div className="flex justify-between text-xs font-bold mt-2">
+                  <div className="flex justify-between font-bold mt-2">
                     <span>CONTRIBUTION SCORE:</span>
                     <span>{data.stats.totalStars * 2 + data.userData.followers * 3}</span>
                   </div>
                 </div>
 
-                <div className="text-center mb-6">
-                  <p className="opacity-75 text-[10px]">
-                    Served by: {data.stats.cashier}
-                  </p>
-                  <p className="opacity-75 text-[10px]">
-                    {new Date().toLocaleTimeString()}
-                  </p>
+                <div className="text-center opacity-75 mb-4">
+                  <p>Served by: {data.stats.serverName}</p>
+                  <p>{new Date().toLocaleTimeString()}</p>
                 </div>
 
-                <div className="border-t border-dashed mt-4 pt-3 text-[10px]">
-                  <p className="text-center italic opacity-75">
-                    {data.stats.randomFortune}
-                  </p>
-                  <div className="mt-2 p-2 border border-dashed text-center">
-                    <p>COUPON CODE: {data.stats.couponCode}</p>
-                    <p className="opacity-75">Save for your next commit!</p>
-                  </div>
+                <div className="border-t border-dashed pt-4 mb-4 text-center">
+                  <p>COUPON CODE: {Math.random().toString(36).substring(2, 8).toUpperCase()}</p>
+                  <p className="text-xs opacity-75">Save for your next commit!</p>
                 </div>
 
-                <div className="opacity-75 mb-6">
+                <div className="mb-6 opacity-75">
                   <p>CARD #: **** **** **** {new Date().getFullYear()}</p>
                   <p>AUTH CODE: {Math.floor(Math.random() * 1000000)}</p>
                   <p>CARDHOLDER: {data.userData.login.toUpperCase()}</p>
