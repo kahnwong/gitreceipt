@@ -93,6 +93,20 @@ async function getGitHubStats(username: string) {
   const commitsData = await commitsResponse.json();
   const totalCommits = commitsData.total_count;
 
+  // Calculate top languages
+  const languages = reposData.reduce((acc: { [key: string]: number }, repo) => {
+    if (repo.language) {
+      acc[repo.language] = (acc[repo.language] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const topLanguages = Object.entries(languages)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 3)
+    .map(([lang]) => lang)
+    .join(', ');
+
   return { 
     userData,
     stats: {
@@ -101,7 +115,8 @@ async function getGitHubStats(username: string) {
       totalForks,
       mostActiveDay,
       totalCommits,
-      serverName
+      serverName,
+      topLanguages: topLanguages || 'NONE'
     }
   };
 }
