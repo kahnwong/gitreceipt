@@ -186,7 +186,7 @@ export default function Home() {
                      border border-zinc-200 dark:border-zinc-700 
                      text-zinc-900 dark:text-white
                      focus:outline-none focus:ring-2 focus:ring-blue-500
-                     dark:focus:ring-blue-400 font-mono text-sm sm:text-base"
+                     dark:focus:ring-blue-400 font-mono text-[16px]"
           />
           <button
             type="submit"
