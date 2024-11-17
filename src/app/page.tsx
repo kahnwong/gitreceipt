@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { Barcode } from '@/app/components/Barcode'
-import { ShareButtons } from '@/app/components/ShareButtons'
+import { toPng } from 'html-to-image'
 
 interface GitHubRepo {
   name: string
@@ -24,22 +24,6 @@ interface GitHubUser {
   public_gists: number
 }
 
-const FORTUNE_MESSAGES = [
-  "Your next commit will be bug-free! 🪲",
-  "A great PR is in your future! 🔮",
-  "Today is a good day to refactor! ♻️",
-  "Your code will make someone smile! 😊",
-  "A mysterious bug will soon reveal itself! 🕵️",
-];
-
-const FAMOUS_DEVS = [
-  "Linus Torvalds",
-  "Ada Lovelace",
-  "Grace Hopper",
-  "Alan Turing",
-  "Margaret Hamilton",
-];
-
 async function getGitHubStats(username: string) {
   const [userResponse, reposResponse] = await Promise.all([
     fetch(`https://api.github.com/users/${username}`),
@@ -56,37 +40,6 @@ async function getGitHubStats(username: string) {
   const totalForks = reposData.reduce((acc: number, repo) => acc + repo.forks_count, 0);
   const totalSize = reposData.reduce((acc: number, repo) => acc + repo.size, 0);
 
-  // Get language stats
-  const languages = reposData
-    .map(repo => repo.language)
-    .filter((lang): lang is string => lang !== null);
-  
-  // Count occurrences of each language
-  const langCount = languages.reduce((acc: Record<string, number>, lang) => {
-    acc[lang] = (acc[lang] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Get top 3 most used languages
-  const topLanguages = Object.entries(langCount)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 3)
-    .map(([lang]) => lang)
-    .join(', ');
-
-  // Calculate active days in last month
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
-  const recentActivity = reposData.filter(repo => 
-    new Date(repo.pushed_at) > thirtyDaysAgo
-  ).length;
-
-  // Add contribution calendar data
-  const today = new Date();
-  const oneYearAgo = new Date(today);
-  oneYearAgo.setFullYear(today.getFullYear() - 1);
-
   // Calculate most active day
   const pushDays = reposData.map(repo => new Date(repo.pushed_at).getDay());
   const dayCount = new Array(7).fill(0);
@@ -101,13 +54,8 @@ async function getGitHubStats(username: string) {
       totalRepos: reposData.length,
       totalStars,
       totalForks,
-      topLanguages,
-      totalSizeMB: Math.round(totalSize / 1024),
-      recentActivity,
       mostActiveDay,
-      randomFortune: FORTUNE_MESSAGES[Math.floor(Math.random() * FORTUNE_MESSAGES.length)],
-      cashier: FAMOUS_DEVS[Math.floor(Math.random() * FAMOUS_DEVS.length)],
-      couponCode: Math.random().toString(36).substring(2, 8).toUpperCase()
+      totalSizeMB: Math.round(totalSize / 1024)
     }
   };
 }
@@ -119,6 +67,38 @@ export default function Home() {
   const [error, setError] = useState('');
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  const handleDownload = async () => {
+    if (receiptRef.current) {
+      const dataUrl = await toPng(receiptRef.current, { quality: 0.95 });
+      const link = document.createElement('a');
+      link.download = `github-receipt-${data?.userData?.login || 'user'}.png`;
+      link.href = dataUrl;
+      link.click();
+    }
+  };
+
+  const handleShare = async () => {
+    if (!receiptRef.current) return;
+
+    try {
+      const dataUrl = await toPng(receiptRef.current);
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], 'github-receipt.png', { type: 'image/png' });
+
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My GitHub Receipt',
+          text: `Check out my GitHub stats for ${data?.userData?.login}!`,
+          files: [file]
+        });
+      } else {
+        handleDownload();
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!username) return;
@@ -127,19 +107,14 @@ export default function Home() {
     setError('');
     
     try {
-      console.log('Fetching data for:', username);
       const stats = await getGitHubStats(username);
-      console.log('Received stats:', stats);
       setData(stats);
     } catch (err) {
-      console.error('Error:', err);
       setError('User not found');
     } finally {
       setLoading(false);
     }
   }
-
-  console.log('Current data state:', data);
 
   return (
     <main className="min-h-screen max-w-2xl mx-auto px-4 py-8 sm:py-16">
@@ -292,10 +267,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Share Buttons below receipt */}
           <div className="mt-6 flex gap-4">
             <button
-              onClick={() => {/* Add download function */}}
+              onClick={handleDownload}
               className="px-4 py-2 bg-white dark:bg-zinc-800 rounded-lg 
                        text-zinc-900 dark:text-white
                        hover:bg-zinc-100 dark:hover:bg-zinc-700 
@@ -308,7 +282,7 @@ export default function Home() {
               Download
             </button>
             <button
-              onClick={() => {/* Add share function */}}
+              onClick={handleShare}
               className="px-4 py-2 bg-white dark:bg-zinc-800 rounded-lg
                        text-zinc-900 dark:text-white
                        hover:bg-zinc-100 dark:hover:bg-zinc-700 

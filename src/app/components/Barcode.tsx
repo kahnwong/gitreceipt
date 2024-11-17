@@ -1,8 +1,12 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import JsBarcode from 'jsbarcode'
 
-export function Barcode({ value }: { value: string }) {
+interface BarcodeProps {
+  value: string;
+}
+
+export function Barcode({ value }: BarcodeProps) {
   const barcodeRef = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
