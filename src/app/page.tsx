@@ -186,6 +186,25 @@ export default function Home() {
         <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
           Generate a receipt-style summary of your GitHub profile
         </p>
+        <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <a 
+            href="https://x.com/ankitkr0" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+          >
+            made by ankit
+          </a>
+          <span className="mx-2">|</span>
+          <a 
+            href="https://bmc.xyz/ankitkr0" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+          >
+            buy ankit a coffee
+          </a>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="mb-12">

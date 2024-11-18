@@ -42,16 +42,6 @@ export default function RootLayout({
           <main className="flex-1">
             {children}
           </main>
-          <footer className="py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
-            <a 
-              href="https://x.com/ankitkr0" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
-            >
-              made by ankit
-            </a>
-          </footer>
         </ThemeProvider>
       </body>
     </html>
