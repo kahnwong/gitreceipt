@@ -42,18 +42,6 @@ export default function RootLayout({
           <main className="flex-1 pb-16">
             {children}
           </main>
-          <footer className="py-3 text-center fixed bottom-0 w-full bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm">
-            <a 
-              href="https://bit.ly/3CKBEGE" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900
-                        hover:bg-zinc-800 dark:hover:bg-zinc-100
-                        transition-colors px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              Use Mira Network to ship AI products quickly
-            </a>
-          </footer>
         </ThemeProvider>
       </body>
     </html>
